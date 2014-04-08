@@ -71,6 +71,7 @@ public class LinkState extends Applet{
 			if(e.status==0) g.setColor(Color.RED);
 			g.drawLine(e.n1.centerx,e.n1.centery,e.n2.centerx,e.n2.centery);
 			g.setColor(Color.BLACK);
+			g.drawString(e.cost+"",e.n1.centerx+(e.n2.centerx-e.n1.centerx)/2+10,e.n1.centery+(e.n2.centery-e.n1.centery)/2+10);
 		}
 		ArrayList<Task> toSend = getTasks(counter);
 		for(Task t:toSend){
@@ -97,16 +98,26 @@ public class LinkState extends Applet{
 		counter++;	
 	}
 	public static void down(Task t){
-		costs[t.n1.index][t.n2.index] = Integer.MAX_VALUE;
-		costs[t.n2.index][t.n1.index] = Integer.MAX_VALUE;
+		costs[t.n1.index][t.n2.index] = 32767;
+		costs[t.n2.index][t.n1.index] = 32767;
 		setStatus(t.n1,t.n2,0);
 		calculateRoutingTables();
+		for(int x=1;x<=nodes.size();x++){
+			System.out.println("Node: "+x);
+			for(int y=1;y<=nodes.size();y++)
+				System.out.println(y+" "+nodes.get(x-1).route[y][0]+" "+nodes.get(x-1).route[y][1]);
+		}
 	}
 	public static void up(Task t){
 		costs[t.n1.index][t.n2.index] = costs_copy[t.n1.index][t.n2.index];
 		costs[t.n2.index][t.n1.index] = costs_copy[t.n2.index][t.n1.index];
 		setStatus(t.n1,t.n2,1);
 		calculateRoutingTables();
+		for(int x=1;x<=nodes.size();x++){
+			System.out.println("Node: "+x);
+			for(int y=1;y<=nodes.size();y++)
+				System.out.println(y+" "+nodes.get(x-1).route[y][0]+" "+nodes.get(x-1).route[y][1]);
+		}
 	}
 	public static int getStatus(Node n1,Node n2){
 		for(Edge e:edges){
@@ -131,7 +142,7 @@ public class LinkState extends Applet{
 			for(int y=1;y<=nodes.size();y++){
 				for(int i=0;i<=nodes.size();i++){
 					visited[i]=false;
-					dist[i]=Integer.MAX_VALUE;
+					dist[i]=32767;
 					pi[i]=0;
 				}
 				int c,current;
