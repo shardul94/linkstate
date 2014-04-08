@@ -11,6 +11,9 @@ public class LinkState extends Applet{
 	public static ArrayList<Task> tasks;
 	public static boolean done = false;
 	public static long counter = 0;
+	public static int costs[][];
+	public static boolean visited[];
+	public static int dist[];
 	public void init(){
 		try{
 			nodes = new ArrayList<Node>();
@@ -20,15 +23,18 @@ public class LinkState extends Applet{
 			File input = new File("input.txt");
 			Scanner in = new Scanner(input);
 			int n = in.nextInt();
+			costs = new int[n+1][n+1];
+			visited = new boolean[n+1];
+			dist = new int[n+1];
 			int e = in.nextInt();
 			int t = in.nextInt();
 			for(int i=1;i<=n;i++)
-				nodes.add(new Node(in.nextInt(),in.nextInt()));
+				nodes.add(new Node(in.nextInt(),in.nextInt(),n));
 			for(int i=1;i<=e;i++)
 				edges.add(new Edge(in.nextInt(),in.nextInt(),in.nextInt()));
 			for(int i=1;i<=t;i++)
 				tasks.add(new Task(in.nextInt(),in.nextInt(),in.nextLong()));
-				
+			calculateRoutingTables();
 			new Thread(){
 				@Override
 				public void run(){
@@ -75,12 +81,49 @@ public class LinkState extends Applet{
 		}
 		return l;
 	}
+	public static void calculateRoutingTables(){
+		for(int x=1;x<=nodes.size();x++){
+			for(int y=1;y<=nodes.size();y++){
+				for(int i=0;i<=nodes.size();i++){
+					visited[i]=false;
+					dist[i]=Integer.MAX_VALUE;
+				}
+				int c,current;
+				current=x;
+				visited[current]=true;
+				dist[current]=0;
+				int step=0;
+				while(current!=y){
+					int dc = dist[current];
+					for(int i=1;i<=nodes.size();i++){
+						if(costs[current][i]!=0&&visited[i]!=true)
+							if(costs[current][i]+dc<dist[i]){
+								dist[i]=costs[current][i]+dc;
+							}
+					}
+					
+					int min=Integer.MAX_VALUE;
+					for(int i=1;i<=nodes.size();i++){
+						if(visited[i]!=true&&dist[i]<min){
+							min=dist[i];
+							current = i;
+						}
+					}
+					if(step++==0) nodes.get(x-1).route[y][1] = current;
+					visited[current] = true;
+				}
+				nodes.get(x-1).route[y][0] = dist[y];
+			}
+		}
+	}
 }
 class Node{
 	int centerx,centery;
-	Node(int x, int y){
+	int route[][];
+	Node(int x, int y,int n){
 		centerx = x;
 		centery = y;
+		route = new int[n+1][3];
 	}
 }
 class Edge{
@@ -91,6 +134,9 @@ class Edge{
 		n2 = LinkState.nodes.get(b-1);
 		cost = c;
 		status = 1;
+		LinkState.costs[a][b] = c;
+		LinkState.costs[b][a] = c;
+		
 	}
 }
 class Packet{
