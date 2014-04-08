@@ -12,8 +12,10 @@ public class LinkState extends Applet{
 	public static boolean done = false;
 	public static long counter = 0;
 	public static int costs[][];
+	public static int costs_copy[][];
 	public static boolean visited[];
 	public static int dist[];
+	public static int pi[];
 	public void init(){
 		try{
 			nodes = new ArrayList<Node>();
@@ -24,17 +26,24 @@ public class LinkState extends Applet{
 			Scanner in = new Scanner(input);
 			int n = in.nextInt();
 			costs = new int[n+1][n+1];
+			costs_copy = new int[n+1][n+1];
 			visited = new boolean[n+1];
 			dist = new int[n+1];
+			pi = new int[n+1];
 			int e = in.nextInt();
 			int t = in.nextInt();
 			for(int i=1;i<=n;i++)
-				nodes.add(new Node(in.nextInt(),in.nextInt(),n));
+				nodes.add(new Node(in.nextInt(),in.nextInt(),n,i));
 			for(int i=1;i<=e;i++)
 				edges.add(new Edge(in.nextInt(),in.nextInt(),in.nextInt()));
 			for(int i=1;i<=t;i++)
-				tasks.add(new Task(in.nextInt(),in.nextInt(),in.nextLong()));
+				tasks.add(new Task(in.nextInt(),in.nextInt(),in.nextInt(),in.nextLong()));
 			calculateRoutingTables();
+			for(int x=1;x<=n;x++){
+				System.out.println("Node: "+x);
+				for(int y=1;y<=n;y++)
+					System.out.println(y+" "+nodes.get(x-1).route[y][0]+" "+nodes.get(x-1).route[y][1]);
+			}
 			new Thread(){
 				@Override
 				public void run(){
@@ -44,12 +53,12 @@ public class LinkState extends Applet{
 							Thread.sleep(40);
 						}
 					}catch(Exception e){
-						System.out.println(e);
+					//	System.out.println(e);
 					}
 				}
 			}.start();
 		}catch(Exception e){
-			System.out.println(e);
+			//System.out.println(e);
 		}
 	}
 	public void paint(Graphics g){
@@ -65,7 +74,20 @@ public class LinkState extends Applet{
 		}
 		ArrayList<Task> toSend = getTasks(counter);
 		for(Task t:toSend){
-			packets.add(new Packet(t.n1,t.n2));
+			if(t.type==0){
+				if(t.n1.route[t.n2.index][1]==t.n1.index){
+					packets.add(new Packet(t.n1,t.n2));
+				}else{
+					int next = t.n1.route[t.n2.index][1];
+					packets.add(new Packet(t.n1,nodes.get(next-1)));
+					tasks.add(new Task(0,next,t.n2.index,counter+19));
+				}
+			}else if(t.type==1){
+				down(t);
+			}
+			else if(t.type==2){
+				up(t);
+			}
 		}
 		for(Packet p:packets){
 			if(p.update())
@@ -73,6 +95,29 @@ public class LinkState extends Applet{
 			else packets.remove(p);
 		}
 		counter++;	
+	}
+	public static void down(Task t){
+		costs[t.n1.index][t.n2.index] = Integer.MAX_VALUE;
+		costs[t.n2.index][t.n1.index] = Integer.MAX_VALUE;
+		setStatus(t.n1,t.n2,0);
+		calculateRoutingTables();
+	}
+	public static void up(Task t){
+		costs[t.n1.index][t.n2.index] = costs_copy[t.n1.index][t.n2.index];
+		costs[t.n2.index][t.n1.index] = costs_copy[t.n2.index][t.n1.index];
+		setStatus(t.n1,t.n2,1);
+		calculateRoutingTables();
+	}
+	public static int getStatus(Node n1,Node n2){
+		for(Edge e:edges){
+			if(e.n1==n1&&e.n2==n2||e.n2==n1&&e.n1==n2) return e.status;
+		}
+		return 0;
+	}
+	public static void setStatus(Node n1,Node n2,int status){
+		for(Edge e:edges){
+			if(e.n1==n1&&e.n2==n2||e.n2==n1&&e.n1==n2) e.status=status;
+		}
 	}
 	public static ArrayList<Task> getTasks(long time){
 		ArrayList<Task> l = new ArrayList<Task>();
@@ -87,18 +132,19 @@ public class LinkState extends Applet{
 				for(int i=0;i<=nodes.size();i++){
 					visited[i]=false;
 					dist[i]=Integer.MAX_VALUE;
+					pi[i]=0;
 				}
 				int c,current;
 				current=x;
 				visited[current]=true;
 				dist[current]=0;
-				int step=0;
 				while(current!=y){
 					int dc = dist[current];
 					for(int i=1;i<=nodes.size();i++){
 						if(costs[current][i]!=0&&visited[i]!=true)
 							if(costs[current][i]+dc<dist[i]){
 								dist[i]=costs[current][i]+dc;
+								pi[i]=current;
 							}
 					}
 					
@@ -109,21 +155,28 @@ public class LinkState extends Applet{
 							current = i;
 						}
 					}
-					if(step++==0) nodes.get(x-1).route[y][1] = current;
 					visited[current] = true;
 				}
+				int temp=pi[y];
+				if(pi[y]==x||pi[y]==0) nodes.get(x-1).route[y][1] = x;
+				else while(temp!=x){
+					nodes.get(x-1).route[y][1] = temp;
+					temp = pi[temp];
+				}
+				System.out.println();
 				nodes.get(x-1).route[y][0] = dist[y];
 			}
 		}
 	}
 }
 class Node{
-	int centerx,centery;
+	int index,centerx,centery;
 	int route[][];
-	Node(int x, int y,int n){
+	Node(int x, int y,int n,int i){
 		centerx = x;
 		centery = y;
 		route = new int[n+1][3];
+		index=i;
 	}
 }
 class Edge{
@@ -136,7 +189,8 @@ class Edge{
 		status = 1;
 		LinkState.costs[a][b] = c;
 		LinkState.costs[b][a] = c;
-		
+		LinkState.costs_copy[a][b] = c;
+		LinkState.costs_copy[b][a] = c;
 	}
 }
 class Packet{
@@ -147,22 +201,24 @@ class Packet{
 		n2 = b;
 		x = n1.centerx;
 		y = n1.centery;
-		incrx = (n2.centerx-n1.centerx)/30.0;
-		incry = (n2.centery-n1.centery)/30.0;
+		incrx = (n2.centerx-n1.centerx)/20.0;
+		incry = (n2.centery-n1.centery)/20.0;
 	}
 	boolean update(){
 		x += incrx;
 		y += incry;
-		if(Math.abs(x-n2.centerx)-5<=incrx&&Math.abs(y-n2.centery)-5<=incry) return false;
+		if(Math.abs(x-n2.centerx)-10<=incrx&&Math.abs(y-n2.centery)-10<=incry) return false;
 		else return true;
 	}
 }
 class Task{
 	Node n1,n2;
 	Long time;
-	Task(int a,int b,long t){
+	int type;
+	Task(int type,int a,int b,long t){
 		n1 = LinkState.nodes.get(a-1);
 		n2 = LinkState.nodes.get(b-1);
 		time = t;
+		this.type=type;
 	}
 }
