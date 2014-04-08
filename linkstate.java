@@ -66,18 +66,20 @@ public class LinkState extends Applet{
 		}
 	}
 	public void paint(Graphics g){
-		bufferGraphics.clearRect(0,0,dim.width,dim.width); 
+		bufferGraphics.clearRect(0,0,dim.width,dim.width);
+		bufferGraphics.drawString(counter+"",5,20);
 		for(Node n:nodes){
 			bufferGraphics.drawOval(n.centerx-20,n.centery-20,40,40);
 			bufferGraphics.drawLine(n.centerx-13,n.centery-13,n.centerx+13,n.centery+13);
 			bufferGraphics.drawLine(n.centerx-13,n.centery+13,n.centerx+13,n.centery-13);
+			bufferGraphics.drawString(n.index+"",n.centerx+20,n.centery-20);
 		}
 		for(Edge e:edges){
 			if(e.status==0) bufferGraphics.setColor(Color.RED);
 			else bufferGraphics.setColor(Color.GREEN);
 			bufferGraphics.drawLine(e.n1.centerx,e.n1.centery,e.n2.centerx,e.n2.centery);
-			bufferGraphics.setColor(Color.BLACK);
 			bufferGraphics.drawString(e.cost+"",e.n1.centerx+(e.n2.centerx-e.n1.centerx)/2+10,e.n1.centery+(e.n2.centery-e.n1.centery)/2+10);
+			bufferGraphics.setColor(Color.BLACK);
 		}
 		ArrayList<Task> toSend = getTasks(counter);
 		for(Task t:toSend){
@@ -91,8 +93,7 @@ public class LinkState extends Applet{
 				}
 			}else if(t.type==1){
 				down(t);
-			}
-			else if(t.type==2){
+			}else if(t.type==2){
 				up(t);
 			}
 		}
