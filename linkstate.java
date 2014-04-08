@@ -35,7 +35,7 @@ public class LinkState extends Applet{
 					try{
 						while(!done){
 							repaint();
-							Thread.sleep(50);
+							Thread.sleep(40);
 						}
 					}catch(Exception e){
 						System.out.println(e);
@@ -53,7 +53,9 @@ public class LinkState extends Applet{
 			g.drawLine(n.centerx-13,n.centery+13,n.centerx+13,n.centery-13);
 		}
 		for(Edge e:edges){
+			if(e.status==0) g.setColor(Color.RED);
 			g.drawLine(e.n1.centerx,e.n1.centery,e.n2.centerx,e.n2.centery);
+			g.setColor(Color.BLACK);
 		}
 		ArrayList<Task> toSend = getTasks(counter);
 		for(Task t:toSend){
