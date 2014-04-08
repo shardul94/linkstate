@@ -6,15 +6,19 @@ import java.util.ArrayList;
 import java.io.File;
 public class linkstate extends Applet{
 	public static ArrayList<Node> nodes;
+	public static ArrayList<Edge> edges;
 	public void init(){
 		try{
 			nodes = new ArrayList<Node>();
+			edges = new ArrayList<Edge>();
 			File input = new File("input.txt");
 			Scanner in = new Scanner(input);
 			int n = in.nextInt();
 			int e = in.nextInt();
 			for(int i=1;i<=n;i++)
 				nodes.add(new Node(in.nextInt(),in.nextInt()));
+			for(int i=1;i<=e;i++)
+				edges.add(new Edge(in.nextInt(),in.nextInt(),in.nextInt()));
 				
 			new Thread(){
 				@Override
@@ -33,26 +37,29 @@ public class linkstate extends Applet{
 	}
 	public void paint(Graphics g){
 		for(Node n:nodes){
-			g.drawOval(n.xpos,n.ypos,40,40);
-			g.drawLine(n.xpos+7,n.ypos+7,n.xpos+33,n.ypos+33);
-			g.drawLine(n.xpos+7,n.ypos+33,n.xpos+33,n.ypos+7);
+			g.drawOval(n.centerx-20,n.centery-20,40,40);
+			g.drawLine(n.centerx-13,n.centery-13,n.centerx+13,n.centery+13);
+			g.drawLine(n.centerx-13,n.centery+13,n.centerx+13,n.centery-13);
+		}
+		for(Edge e:edges){
+			g.drawLine(nodes.get(e.n1-1).centerx,nodes.get(e.n1-1).centery,nodes.get(e.n2-1).centerx,nodes.get(e.n2-1).centery);
 		}
 		
 	}
 }
 class Node{
-	int xpos,ypos;
+	int centerx,centery;
 	Node(int x, int y){
-		xpos = x;
-		ypos = y;
+		centerx = x;
+		centery = y;
 	}
 }
 class Edge{
 	int n1,n2,cost,status;
-	Edge(int a, int b, int c, int s){
+	Edge(int a, int b, int c){
 		n1 = a;
 		n2 = b;
 		cost = c;
-		status = s;
+		status = 1;
 	}
 }
