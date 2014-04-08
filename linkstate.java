@@ -16,6 +16,9 @@ public class LinkState extends Applet{
 	public static boolean visited[];
 	public static int dist[];
 	public static int pi[];
+	Graphics bufferGraphics;
+    Image offscreen;
+    Dimension dim;
 	public void init(){
 		try{
 			nodes = new ArrayList<Node>();
@@ -44,6 +47,9 @@ public class LinkState extends Applet{
 				for(int y=1;y<=n;y++)
 					System.out.println(y+" "+nodes.get(x-1).route[y][0]+" "+nodes.get(x-1).route[y][1]);
 			}
+			dim = getSize();
+          	offscreen = createImage(dim.width,dim.height);
+          	bufferGraphics = offscreen.getGraphics(); 
 			new Thread(){
 				@Override
 				public void run(){
@@ -53,25 +59,25 @@ public class LinkState extends Applet{
 							Thread.sleep(40);
 						}
 					}catch(Exception e){
-					//	System.out.println(e);
 					}
 				}
 			}.start();
 		}catch(Exception e){
-			//System.out.println(e);
 		}
 	}
 	public void paint(Graphics g){
+		bufferGraphics.clearRect(0,0,dim.width,dim.width); 
 		for(Node n:nodes){
-			g.drawOval(n.centerx-20,n.centery-20,40,40);
-			g.drawLine(n.centerx-13,n.centery-13,n.centerx+13,n.centery+13);
-			g.drawLine(n.centerx-13,n.centery+13,n.centerx+13,n.centery-13);
+			bufferGraphics.drawOval(n.centerx-20,n.centery-20,40,40);
+			bufferGraphics.drawLine(n.centerx-13,n.centery-13,n.centerx+13,n.centery+13);
+			bufferGraphics.drawLine(n.centerx-13,n.centery+13,n.centerx+13,n.centery-13);
 		}
 		for(Edge e:edges){
-			if(e.status==0) g.setColor(Color.RED);
-			g.drawLine(e.n1.centerx,e.n1.centery,e.n2.centerx,e.n2.centery);
-			g.setColor(Color.BLACK);
-			g.drawString(e.cost+"",e.n1.centerx+(e.n2.centerx-e.n1.centerx)/2+10,e.n1.centery+(e.n2.centery-e.n1.centery)/2+10);
+			if(e.status==0) bufferGraphics.setColor(Color.RED);
+			else bufferGraphics.setColor(Color.GREEN);
+			bufferGraphics.drawLine(e.n1.centerx,e.n1.centery,e.n2.centerx,e.n2.centery);
+			bufferGraphics.setColor(Color.BLACK);
+			bufferGraphics.drawString(e.cost+"",e.n1.centerx+(e.n2.centerx-e.n1.centerx)/2+10,e.n1.centery+(e.n2.centery-e.n1.centery)/2+10);
 		}
 		ArrayList<Task> toSend = getTasks(counter);
 		for(Task t:toSend){
@@ -81,7 +87,7 @@ public class LinkState extends Applet{
 				}else{
 					int next = t.n1.route[t.n2.index][1];
 					packets.add(new Packet(t.n1,nodes.get(next-1)));
-					tasks.add(new Task(0,next,t.n2.index,counter+19));
+					tasks.add(new Task(0,next,t.n2.index,counter+20));
 				}
 			}else if(t.type==1){
 				down(t);
@@ -92,11 +98,15 @@ public class LinkState extends Applet{
 		}
 		for(Packet p:packets){
 			if(p.update())
-				g.fillOval((int)p.x,(int)p.y,10,10);
+				bufferGraphics.fillOval((int)p.x,(int)p.y,10,10);
 			else packets.remove(p);
 		}
+		g.drawImage(offscreen,0,0,this); 
 		counter++;	
 	}
+	public void update(Graphics g){
+          paint(g);
+    } 
 	public static void down(Task t){
 		costs[t.n1.index][t.n2.index] = 32767;
 		costs[t.n2.index][t.n1.index] = 32767;
