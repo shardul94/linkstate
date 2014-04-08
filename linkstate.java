@@ -1,10 +1,10 @@
 import java.awt.*;
 import java.applet.*;
-//<applet code="linkstate.class" height=1000 width=1000> </applet>
+//<applet code="LinkState.class" height=1000 width=1000> </applet>
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.io.File;
-public class linkstate extends Applet{
+public class LinkState extends Applet{
 	public static ArrayList<Node> nodes;
 	public static ArrayList<Edge> edges;
 	public void init(){
@@ -42,7 +42,7 @@ public class linkstate extends Applet{
 			g.drawLine(n.centerx-13,n.centery+13,n.centerx+13,n.centery-13);
 		}
 		for(Edge e:edges){
-			g.drawLine(nodes.get(e.n1-1).centerx,nodes.get(e.n1-1).centery,nodes.get(e.n2-1).centerx,nodes.get(e.n2-1).centery);
+			g.drawLine(e.n1.centerx,e.n1.centery,e.n2.centerx,e.n2.centery);
 		}
 		
 	}
@@ -55,11 +55,30 @@ class Node{
 	}
 }
 class Edge{
-	int n1,n2,cost,status;
+	Node n1,n2;
+	int cost,status;
 	Edge(int a, int b, int c){
-		n1 = a;
-		n2 = b;
+		n1 = LinkState.nodes.get(a-1);
+		n2 = LinkState.nodes.get(b-1);
 		cost = c;
 		status = 1;
+	}
+}
+class Packet{
+	Node n1,n2;
+	float x,y,incrx,incry;
+	Packet(int a, int b){
+		n1 = LinkState.nodes.get(a-1);
+		n2 = LinkState.nodes.get(b-1);
+		x = n1.centerx;
+		y = n1.centery;
+		incrx = (n2.centerx-n1.centerx)/30;
+		incry = (n2.centery-n1.centery)/30;
+	}
+	boolean update(){
+		x += incrx;
+		y += incry;
+		if(Math.abs(x-n1.centerx)<incrx&&Math.abs(y-n1.centery)<incry) return false;
+		else return true;
 	}
 }
