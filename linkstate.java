@@ -11,11 +11,13 @@ public class LinkState extends Applet{
 	public static ArrayList<Task> tasks;
 	public static boolean done = false;
 	public static long counter = 0;
+	//For Djikstra's Algo
 	public static int costs[][];
 	public static int costs_copy[][];
 	public static boolean visited[];
 	public static int dist[];
 	public static int pi[];
+	//Double Buffering
 	Graphics bufferGraphics;
     Image offscreen;
     Dimension dim;
@@ -27,12 +29,14 @@ public class LinkState extends Applet{
 			tasks = new ArrayList<Task>();
 			File input = new File("input.txt");
 			Scanner in = new Scanner(input);
+			//Input Nodes and create arrays for Djikstra
 			int n = in.nextInt();
 			costs = new int[n+1][n+1];
 			costs_copy = new int[n+1][n+1];
 			visited = new boolean[n+1];
 			dist = new int[n+1];
 			pi = new int[n+1];
+			//Input edges and tasks and add all to List
 			int e = in.nextInt();
 			int t = in.nextInt();
 			for(int i=1;i<=n;i++)
@@ -41,19 +45,21 @@ public class LinkState extends Applet{
 				edges.add(new Edge(in.nextInt(),in.nextInt(),in.nextInt()));
 			for(int i=1;i<=t;i++)
 				tasks.add(new Task(in.nextInt(),in.nextInt(),in.nextInt(),in.nextLong()));
+			//Calculate routing tables by applying Djikstra's Algo and display the tables
 			calculateRoutingTables();
 			for(int x=1;x<=n;x++){
 				System.out.println("Node: "+x);
 				for(int y=1;y<=n;y++)
 					System.out.println(y+" "+nodes.get(x-1).route[y][0]+" "+nodes.get(x-1).route[y][1]);
 			}
+			//Setup for Double Buffering
 			dim = getSize();
           	offscreen = createImage(dim.width,dim.height);
           	bufferGraphics = offscreen.getGraphics(); 
 			new Thread(){
 				@Override
 				public void run(){
-					try{
+					try{//Main Animation Loop
 						while(!done){
 							repaint();
 							Thread.sleep(40);
@@ -66,14 +72,17 @@ public class LinkState extends Applet{
 		}
 	}
 	public void paint(Graphics g){
+		//Clear previous screen and display counter
 		bufferGraphics.clearRect(0,0,dim.width,dim.width);
 		bufferGraphics.drawString(counter+"",5,20);
+		//Display nodes
 		for(Node n:nodes){
 			bufferGraphics.drawOval(n.centerx-20,n.centery-20,40,40);
 			bufferGraphics.drawLine(n.centerx-13,n.centery-13,n.centerx+13,n.centery+13);
 			bufferGraphics.drawLine(n.centerx-13,n.centery+13,n.centerx+13,n.centery-13);
 			bufferGraphics.drawString(n.index+"",n.centerx+20,n.centery-20);
 		}
+		//Display edges
 		for(Edge e:edges){
 			if(e.status==0) bufferGraphics.setColor(Color.RED);
 			else bufferGraphics.setColor(Color.GREEN);
@@ -81,27 +90,30 @@ public class LinkState extends Applet{
 			bufferGraphics.drawString(e.cost+"",e.n1.centerx+(e.n2.centerx-e.n1.centerx)/2+10,e.n1.centery+(e.n2.centery-e.n1.centery)/2+10);
 			bufferGraphics.setColor(Color.BLACK);
 		}
+		//Get tasks starting at current time
 		ArrayList<Task> toSend = getTasks(counter);
 		for(Task t:toSend){
-			if(t.type==0){
-				if(t.n1.route[t.n2.index][1]==t.n1.index){
+			if(t.type==0){//type=0 send packet
+				if(t.n1.route[t.n2.index][1]==t.n1.index){//If the direct edge is the shortest path
 					packets.add(new Packet(t.n1,t.n2));
-				}else{
+				}else{//Send packet from first node to next node, add task from next node to end
 					int next = t.n1.route[t.n2.index][1];
 					packets.add(new Packet(t.n1,nodes.get(next-1)));
 					tasks.add(new Task(0,next,t.n2.index,counter+20));
 				}
-			}else if(t.type==1){
+			}else if(t.type==1){//type=1 bring down a link
 				down(t);
-			}else if(t.type==2){
+			}else if(t.type==2){//type=2 pull up a link
 				up(t);
 			}
 		}
+		//Draw packets currently moving
 		for(Packet p:packets){
 			if(p.update())
 				bufferGraphics.fillOval((int)p.x,(int)p.y,10,10);
 			else packets.remove(p);
 		}
+		//Draw the buffered image to the screen
 		g.drawImage(offscreen,0,0,this); 
 		counter++;	
 	}
@@ -109,6 +121,7 @@ public class LinkState extends Applet{
           paint(g);
     } 
 	public static void down(Task t){
+		//Set costs to infinity and update routing tables
 		costs[t.n1.index][t.n2.index] = 32767;
 		costs[t.n2.index][t.n1.index] = 32767;
 		setStatus(t.n1,t.n2,0);
@@ -120,6 +133,7 @@ public class LinkState extends Applet{
 		}
 	}
 	public static void up(Task t){
+		//Set costs to the original value and update routing tables
 		costs[t.n1.index][t.n2.index] = costs_copy[t.n1.index][t.n2.index];
 		costs[t.n2.index][t.n1.index] = costs_copy[t.n2.index][t.n1.index];
 		setStatus(t.n1,t.n2,1);
@@ -130,25 +144,25 @@ public class LinkState extends Applet{
 				System.out.println(y+" "+nodes.get(x-1).route[y][0]+" "+nodes.get(x-1).route[y][1]);
 		}
 	}
-	public static int getStatus(Node n1,Node n2){
+	public static int getStatus(Node n1,Node n2){//Get status of a link
 		for(Edge e:edges){
 			if(e.n1==n1&&e.n2==n2||e.n2==n1&&e.n1==n2) return e.status;
 		}
 		return 0;
 	}
-	public static void setStatus(Node n1,Node n2,int status){
+	public static void setStatus(Node n1,Node n2,int status){//Set status of a link
 		for(Edge e:edges){
 			if(e.n1==n1&&e.n2==n2||e.n2==n1&&e.n1==n2) e.status=status;
 		}
 	}
-	public static ArrayList<Task> getTasks(long time){
+	public static ArrayList<Task> getTasks(long time){//get tasks at the specified time
 		ArrayList<Task> l = new ArrayList<Task>();
 		for(Task t:tasks){
 			if(t.time==time) l.add(t);
 		}
 		return l;
 	}
-	public static void calculateRoutingTables(){
+	public static void calculateRoutingTables(){//Djikstra's Algo
 		for(int x=1;x<=nodes.size();x++){
 			for(int y=1;y<=nodes.size();y++){
 				for(int i=0;i<=nodes.size();i++){
@@ -179,6 +193,7 @@ public class LinkState extends Applet{
 					}
 					visited[current] = true;
 				}
+				//Assign next hop field
 				int temp=pi[y];
 				if(pi[y]==x||pi[y]==0) nodes.get(x-1).route[y][1] = x;
 				else while(temp!=x){
@@ -186,6 +201,7 @@ public class LinkState extends Applet{
 					temp = pi[temp];
 				}
 				System.out.println();
+				//Assign total cost field
 				nodes.get(x-1).route[y][0] = dist[y];
 			}
 		}
@@ -229,7 +245,7 @@ class Packet{
 	boolean update(){
 		x += incrx;
 		y += incry;
-		if(Math.abs(x-n2.centerx)-10<=incrx&&Math.abs(y-n2.centery)-10<=incry) return false;
+		if(Math.abs(x-n2.centerx)-10<=incrx&&Math.abs(y-n2.centery)-10<=incry) return false; //Checks if the packet has reached the destination node
 		else return true;
 	}
 }
