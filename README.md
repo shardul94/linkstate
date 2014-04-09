@@ -1,9 +1,9 @@
 # Link State Routing Simulation
 
 The program takes an input from a file and tries to simulate Link State Routing for the given scenario. The application is made in JAVA Applets.
-To run the program enter these commands in your command prompt or terminal.
-`javac LinkState.java
- appletviewer LinkState.java`
+To run the program enter these commands in your command prompt or terminal.<br />
+`javac LinkState.java`
+`appletviewer LinkState.java`
 
 ***
 
