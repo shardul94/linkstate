@@ -1,10 +1,10 @@
 import java.awt.*;
 import java.applet.*;
-//<applet code="LinkState.class" height=1000 width=1000> </applet>
+//<applet code="linkstate.class" height=1000 width=1000> </applet>
 import java.util.Scanner;
 import java.util.ArrayList;
 import java.io.File;
-public class LinkState extends Applet{
+public class linkstate extends Applet{
 	public static ArrayList<Node> nodes;
 	public static ArrayList<Edge> edges;
 	public static ArrayList<Packet> packets;
@@ -221,14 +221,14 @@ class Edge{
 	Node n1,n2;
 	int cost,status;
 	Edge(int a, int b, int c){
-		n1 = LinkState.nodes.get(a-1);
-		n2 = LinkState.nodes.get(b-1);
+		n1 = linkstate.nodes.get(a-1);
+		n2 = linkstate.nodes.get(b-1);
 		cost = c;
 		status = 1;
-		LinkState.costs[a][b] = c;
-		LinkState.costs[b][a] = c;
-		LinkState.costs_copy[a][b] = c;
-		LinkState.costs_copy[b][a] = c;
+		linkstate.costs[a][b] = c;
+		linkstate.costs[b][a] = c;
+		linkstate.costs_copy[a][b] = c;
+		linkstate.costs_copy[b][a] = c;
 	}
 }
 class Packet{
@@ -254,8 +254,8 @@ class Task{
 	Long time;
 	int type;
 	Task(int type,int a,int b,long t){
-		n1 = LinkState.nodes.get(a-1);
-		n2 = LinkState.nodes.get(b-1);
+		n1 = linkstate.nodes.get(a-1);
+		n2 = linkstate.nodes.get(b-1);
 		time = t;
 		this.type=type;
 	}
